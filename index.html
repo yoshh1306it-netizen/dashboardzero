@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+                <div>
+                    <h2 style="margin:0;">School Dashboard</h2>
+                    <small style="color:var(--text-sub)">今日も頑張りましょう！</small>
+                </div>
+            </div>
+            <div style="display: flex; gap:10px;">
+                <select id="userClassDisplay" class="nav-btn" disabled><option>設定読込中...</option></select>
+                <a href="settings.html" class="nav-btn"><i class="fas fa-cog"></i> 設定</a>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card clock-card">
+                <div class="clock-header"><i class="far fa-clock"></i> 現在時刻</div>
+                <div class="time-display" id="clockTime">--:--:--</div>
+                <div class="date-display" id="clockDate">----/--/--</div>
+            </div>
+
+            <div class="card next-class-card">
+                <div class="badge"><i class="fas fa-book-open"></i> 次の授業</div>
+                <div class="subject-large" id="nextClassSubject">読み込み中...</div>
+                <div style="color:var(--text-sub); font-size:14px;" id="nextClassTime">--:--</div>
+            </div>
+
+            <div class="card schedule-card">
+                <div style="display:flex; justify-content:space-between;">
+                    <h3><i class="far fa-calendar-alt"></i> 今日の時間割</h3>
+                    <span id="scheduleDay" style="color:var(--text-sub)">-曜日</span>
+                </div>
+                <ul class="schedule-list" id="scheduleList">
+                    </ul>
+            </div>
+
+            <div class="card test-card">
+                <div class="test-info">
+                    <div style="display:flex; align-items:center; gap:5px;"><i class="fas fa-bullseye"></i> 次のテストまで</div>
+                    <h2 style="margin:5px 0;" id="testName">テスト予定なし</h2>
+                </div>
+                <div class="countdown-timer" id="testTimer"></div>
+            </div>
+
+            <div class="tools-area">
+                <div class="card">
+                    <div style="color:#D62648; font-weight:bold; font-size:12px;"><i class="fas fa-stopwatch"></i> ポモドーロ</div>
+                    <div class="timer-display" id="pomoTimer">25:00</div>
+                    <button class="pomo-btn" id="pomoBtn"><i class="fas fa-play"></i> 開始</button>
+                </div>
+
+                <div class="card">
+                    <div style="color:#F5A623; font-weight:bold; font-size:12px; margin-bottom:10px;"><i class="fas fa-list"></i> ToDoリスト</div>
+                    <div class="todo-input-group">
+                        <input type="text" class="todo-input" id="newTodo" placeholder="タスク追加...">
+                        <button class="add-btn" id="addTodoBtn">+</button>
+                    </div>
+                    <ul class="todo-list" id="todoList"></ul>
+                </div>
+
+                <div class="card">
+                    <div style="color:#8F5FEF; font-weight:bold; font-size:12px; margin-bottom:10px;"><i class="far fa-calendar"></i> 個人スケジュール</div>
+                    <div id="calendarArea" style="font-size:12px; color:var(--text-sub);">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+    <script>
+        // ホーム画面特有の初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            initClock();
+            loadGlobalData().then(() => {
+                renderHome();
+            });
+            initPomodoro();
+            initTodo();
+        });
+    </script>
+</body>
+</html>
