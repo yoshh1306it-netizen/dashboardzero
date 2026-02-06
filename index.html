@@ -17,8 +17,10 @@
                     <small style="color:var(--text-sub)">今日も頑張りましょう！</small>
                 </div>
             </div>
-            <div style="display: flex; gap:10px;">
-                <select id="userClassDisplay" class="nav-btn" disabled><option>設定読込中...</option></select>
+            <div class="nav-group">
+                <a href="admin.html" class="nav-btn"><i class="fas fa-user-shield"></i> 管理者画面</a>
+                
+                <select id="userClassDisplay" class="nav-btn" disabled style="background:#f9f9f9; cursor:default;"><option>読込中...</option></select>
                 <a href="settings.html" class="nav-btn"><i class="fas fa-cog"></i> 設定</a>
             </div>
         </header>
@@ -37,8 +39,8 @@
             </div>
 
             <div class="card schedule-card">
-                <div style="display:flex; justify-content:space-between;">
-                    <h3><i class="far fa-calendar-alt"></i> 今日の時間割</h3>
+                <div class="card-header-flex">
+                    <div class="card-title"><i class="far fa-calendar-alt"></i> 今日の時間割</div>
                     <span id="scheduleDay" style="color:var(--text-sub)">-曜日</span>
                 </div>
                 <ul class="schedule-list" id="scheduleList">
@@ -48,20 +50,25 @@
             <div class="card test-card">
                 <div class="test-info">
                     <div style="display:flex; align-items:center; gap:5px;"><i class="fas fa-bullseye"></i> 次のテストまで</div>
-                    <h2 style="margin:5px 0;" id="testName">テスト予定なし</h2>
+                    <h2 style="margin:5px 0;" id="testName">予定なし</h2>
                 </div>
                 <div class="countdown-timer" id="testTimer"></div>
             </div>
 
             <div class="tools-area">
                 <div class="card">
-                    <div style="color:#D62648; font-weight:bold; font-size:12px;"><i class="fas fa-stopwatch"></i> ポモドーロ</div>
+                    <div class="card-header-flex">
+                        <div class="card-title" style="color:#D62648;"><i class="fas fa-stopwatch"></i> ポモドーロ</div>
+                        <button class="icon-btn" onclick="openPomoModal()"><i class="fas fa-cog"></i></button>
+                    </div>
                     <div class="timer-display" id="pomoTimer">25:00</div>
                     <button class="pomo-btn" id="pomoBtn"><i class="fas fa-play"></i> 開始</button>
                 </div>
 
                 <div class="card">
-                    <div style="color:#F5A623; font-weight:bold; font-size:12px; margin-bottom:10px;"><i class="fas fa-list"></i> ToDoリスト</div>
+                    <div class="card-header-flex">
+                        <div class="card-title" style="color:#F5A623;"><i class="fas fa-list"></i> ToDoリスト</div>
+                    </div>
                     <div class="todo-input-group">
                         <input type="text" class="todo-input" id="newTodo" placeholder="タスク追加...">
                         <button class="add-btn" id="addTodoBtn">+</button>
@@ -70,16 +77,30 @@
                 </div>
 
                 <div class="card">
-                    <div style="color:#8F5FEF; font-weight:bold; font-size:12px; margin-bottom:10px;"><i class="far fa-calendar"></i> 個人スケジュール</div>
+                    <div class="card-header-flex">
+                        <div class="card-title" style="color:#8F5FEF;"><i class="far fa-calendar"></i> 個人スケジュール</div>
+                    </div>
                     <div id="calendarArea" style="font-size:12px; color:var(--text-sub);">
                         </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div id="pomoModal" class="modal">
+        <div class="modal-content">
+            <h3>タイマー設定</h3>
+            <p style="font-size:14px; color:#666;">集中する時間を設定してください（分）</p>
+            <input type="number" id="pomoDurationInput" class="form-control" value="25" min="1" max="60">
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button class="btn-primary" onclick="savePomoSetting()" style="background:var(--primary);">保存</button>
+                <button class="btn-primary" onclick="closePomoModal()" style="background:#ccc;">キャンセル</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script>
-        // ホーム画面特有の初期化
         document.addEventListener('DOMContentLoaded', () => {
             initClock();
             loadGlobalData().then(() => {
