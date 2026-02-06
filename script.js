@@ -1,46 +1,32 @@
-/* script.js 
-  生徒・管理者共通のデータフェッチ関数などを定義
-*/
+/* script.js */
+const DATA_URL = './data.json'; 
 
-const DATA_URL = './data.json'; // 本番ではGitHub PagesのURLでも可
-
-// データを取得する関数
+// データ取得
 async function loadGlobalData() {
     try {
-        // キャッシュ回避のためにタイムスタンプ付与
         const res = await fetch(`${DATA_URL}?t=${new Date().getTime()}`);
         return await res.json();
     } catch (e) {
         console.error("Data load failed", e);
-        // フォールバック用ダミーデータ
-        return {
-            timeSettings: [], schedules: {"21HR":{}}, tests: []
-        };
+        return { timeSettings: [], schedules: {"21HR":{}}, tests: [] };
     }
 }
 
-// ----------------------------------------
-// 以下、生徒画面(index.html)用ロジック
-// ----------------------------------------
-
+// --- 生徒画面用ロジック ---
 let fetchedData = null;
 let currentClass = localStorage.getItem('userClass') || '21HR';
 
 async function renderHome() {
     fetchedData = await loadGlobalData();
-    
-    // クラス表示
     const classDisplay = document.getElementById('userClassDisplay');
     if(classDisplay) {
         classDisplay.innerHTML = `<option>${currentClass}</option>`;
         classDisplay.value = currentClass;
     }
-
     renderSchedule();
     updateNextClass();
     updateTestCountdown();
     
-    // 1分毎に更新
     setInterval(() => {
         updateNextClass();
         updateTestCountdown();
@@ -60,7 +46,7 @@ function initClock() {
     update();
 }
 
-// 時間割レンダリング
+// 時間割
 function renderSchedule() {
     const list = document.getElementById('scheduleList');
     if(!list) return;
@@ -68,32 +54,26 @@ function renderSchedule() {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const now = new Date();
     const dayKey = days[now.getDay()];
-    
-    // 休日等の処理
     const todaySubjects = fetchedData.schedules[currentClass]?.[dayKey];
     
     document.getElementById('scheduleDay').textContent = now.toLocaleDateString('ja-JP', {weekday:'long'});
-
     list.innerHTML = '';
+    
     if(!todaySubjects || todaySubjects.length === 0) {
         list.innerHTML = '<li style="padding:20px; text-align:center;">本日は授業がありません</li>';
         return;
     }
 
     todaySubjects.forEach((sub, i) => {
-        if(!sub) return; // 空きコマ
+        if(!sub) return;
         const periodSetting = fetchedData.timeSettings[i];
         const li = document.createElement('li');
         li.className = 'schedule-item';
         
-        // 現在の授業ハイライト判定
         const nowMin = now.getHours() * 60 + now.getMinutes();
         const [sH, sM] = periodSetting.start.split(':').map(Number);
         const [eH, eM] = periodSetting.end.split(':').map(Number);
-        const startMin = sH * 60 + sM;
-        const endMin = eH * 60 + eM;
-
-        if (nowMin >= startMin && nowMin <= endMin) {
+        if (nowMin >= sH * 60 + sM && nowMin <= eH * 60 + eM) {
             li.classList.add('current-class');
         }
 
@@ -106,7 +86,7 @@ function renderSchedule() {
     });
 }
 
-// 次の授業判定
+// 次の授業
 function updateNextClass() {
     const elSub = document.getElementById('nextClassSubject');
     const elTime = document.getElementById('nextClassTime');
@@ -134,7 +114,6 @@ function updateNextClass() {
             const subName = todaySubjects[i];
             if(subName) {
                 elSub.textContent = subName;
-                // 分数計算
                 const diff = startTotal - currentMins;
                 elTime.textContent = `${time.start}開始 (${diff}分後)`;
                 found = true;
@@ -142,10 +121,9 @@ function updateNextClass() {
             }
         }
     }
-
     if(!found) {
-        elSub.textContent = "放課後 / 授業終了";
-        elTime.textContent = "お疲れ様でした";
+        elSub.textContent = "放課後";
+        elTime.textContent = "全ての授業が終了しました";
     }
 }
 
@@ -155,7 +133,6 @@ function updateTestCountdown() {
     const elTimer = document.getElementById('testTimer');
     if(!elName) return;
 
-    // 未来のテストを探す
     const now = new Date();
     const futureTests = fetchedData.tests
         .map(t => ({...t, dateObj: new Date(t.date)}))
@@ -167,16 +144,14 @@ function updateTestCountdown() {
         elTimer.textContent = "";
         return;
     }
-
     const target = futureTests[0];
     elName.textContent = target.name;
-    
     const diff = target.dateObj - now;
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     elTimer.textContent = `あと ${days + 1} 日`;
 }
 
-// ToDoリスト (LocalStorage)
+// ToDo
 function initTodo() {
     const input = document.getElementById('newTodo');
     const btn = document.getElementById('addTodoBtn');
@@ -192,7 +167,7 @@ function initTodo() {
             li.innerHTML = `
                 <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo(${i})">
                 <span>${todo.text}</span>
-                <button onclick="removeTodo(${i})" style="margin-left:auto; border:none; background:none; color:#ccc;">×</button>
+                <button onclick="removeTodo(${i})" style="margin-left:auto; border:none; background:none; color:#ccc; cursor:pointer;">×</button>
             `;
             list.appendChild(li);
         });
@@ -213,32 +188,33 @@ function initTodo() {
         localStorage.setItem('todos', JSON.stringify(todos));
         render();
     };
-
     window.removeTodo = (i) => {
         const todos = JSON.parse(localStorage.getItem('todos') || '[]');
         todos.splice(i, 1);
         localStorage.setItem('todos', JSON.stringify(todos));
         render();
     };
-
     render();
 }
 
-// ポモドーロタイマー
+// ポモドーロタイマー（設定機能付き）
 let pomoInterval;
+let pomoDuration = 25; // 初期値
 let timeLeft = 25 * 60;
 let isRunning = false;
 
 function initPomodoro() {
+    // 保存された設定を読み込む
+    const saved = localStorage.getItem('pomoDuration');
+    if(saved) pomoDuration = parseInt(saved);
+
     const timerDisplay = document.getElementById('pomoTimer');
     const btn = document.getElementById('pomoBtn');
     if(!timerDisplay) return;
 
-    const updateDisplay = () => {
-        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-        const s = (timeLeft % 60).toString().padStart(2, '0');
-        timerDisplay.textContent = `${m}:${s}`;
-    };
+    // 初期表示更新
+    timeLeft = pomoDuration * 60;
+    updatePomoDisplay(timerDisplay);
 
     btn.onclick = () => {
         if(isRunning) {
@@ -251,16 +227,48 @@ function initPomodoro() {
             pomoInterval = setInterval(() => {
                 if(timeLeft > 0) {
                     timeLeft--;
-                    updateDisplay();
+                    updatePomoDisplay(timerDisplay);
                 } else {
                     clearInterval(pomoInterval);
-                    alert('集中時間終了！休憩しましょう。');
-                    timeLeft = 25 * 60;
-                    isRunning = false;
-                    btn.innerHTML = '<i class="fas fa-play"></i> 開始';
-                    updateDisplay();
+                    alert('集中時間終了！');
+                    resetPomo();
                 }
             }, 1000);
         }
     };
 }
+
+function updatePomoDisplay(el) {
+    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const s = (timeLeft % 60).toString().padStart(2, '0');
+    el.textContent = `${m}:${s}`;
+}
+
+function resetPomo() {
+    const btn = document.getElementById('pomoBtn');
+    timeLeft = pomoDuration * 60;
+    isRunning = false;
+    btn.innerHTML = '<i class="fas fa-play"></i> 開始';
+    updatePomoDisplay(document.getElementById('pomoTimer'));
+}
+
+// ポモドーロ設定モーダル制御
+window.openPomoModal = () => {
+    document.getElementById('pomoDurationInput').value = pomoDuration;
+    document.getElementById('pomoModal').classList.add('active');
+};
+window.closePomoModal = () => {
+    document.getElementById('pomoModal').classList.remove('active');
+};
+window.savePomoSetting = () => {
+    const val = document.getElementById('pomoDurationInput').value;
+    if(val > 0) {
+        pomoDuration = parseInt(val);
+        localStorage.setItem('pomoDuration', pomoDuration);
+        
+        // タイマーリセットして反映
+        clearInterval(pomoInterval);
+        resetPomo();
+        closePomoModal();
+    }
+};
