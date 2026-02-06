@@ -14,7 +14,7 @@
                 <i class="fas fa-shield-alt"></i>
             </div>
             <h3>管理者認証</h3>
-            <div class="form-group">
+            <div class="form-group" style="text-align:left; margin-bottom:20px;">
                 <input type="password" id="adminPass" class="form-control" placeholder="パスワード (1234)">
             </div>
             <button class="btn-primary" onclick="checkLogin()">ログイン</button>
@@ -23,9 +23,9 @@
 
     <div id="adminPanel" class="container" style="display:none;">
         <header class="header">
-            <a href="index.html" style="color:var(--text-sub); text-decoration:none;"><i class="fas fa-arrow-left"></i> 生徒画面プレビュー</a>
+            <a href="index.html" class="nav-btn"><i class="fas fa-arrow-left"></i> 戻る</a>
             <h2>管理者設定</h2>
-            <button class="nav-btn" onclick="logout()">ログアウト</button>
+            <button class="nav-btn" onclick="location.reload()">ログアウト</button>
         </header>
 
         <div class="card" style="margin-bottom:20px; border:2px solid var(--primary);">
@@ -34,15 +34,11 @@
                 <i class="fas fa-chevron-down"></i>
             </div>
             <div id="ghSettings" style="display:none; margin-top:15px;">
-                <div class="form-group">
-                    <label>GitHub Personal Access Token (repo scope)</label>
-                    <input type="password" id="ghToken" class="form-control" placeholder="ghp_xxxxxxxxxxxx">
-                </div>
+                <div class="row"><input type="password" id="ghToken" class="form-control" placeholder="GitHub Token (repo scope)"></div>
                 <div class="row">
-                    <input type="text" id="ghUser" class="form-control" placeholder="ユーザー名 (例: yourname)">
-                    <input type="text" id="ghRepo" class="form-control" placeholder="リポジトリ名 (例: school-dash)">
+                    <input type="text" id="ghUser" class="form-control" placeholder="Username">
+                    <input type="text" id="ghRepo" class="form-control" placeholder="Repository Name">
                 </div>
-                <small style="color:red;">※このトークンはブラウザに保存されません。更新の度に入力するか、運用時は慎重に扱ってください。</small>
             </div>
         </div>
 
@@ -54,7 +50,7 @@
 
         <div id="tab-time" class="tab-content active">
             <div class="card">
-                <h3>時限開始・終了時刻</h3>
+                <h3>時限設定</h3>
                 <div id="timeSettingsContainer"></div>
             </div>
         </div>
@@ -62,15 +58,9 @@
         <div id="tab-schedule" class="tab-content">
             <div class="card">
                 <div class="row">
-                    <select id="adminClassSelect" class="form-control" onchange="renderAdminSchedule()">
-                        <option value="21HR">21HR</option>
-                        </select>
+                    <select id="adminClassSelect" class="form-control" onchange="renderAdminSchedule()"><option value="21HR">21HR</option></select>
                     <select id="adminDaySelect" class="form-control" onchange="renderAdminSchedule()">
-                        <option value="Mon">月曜日</option>
-                        <option value="Tue">火曜日</option>
-                        <option value="Wed">水曜日</option>
-                        <option value="Thu">木曜日</option>
-                        <option value="Fri">金曜日</option>
+                        <option value="Mon">月曜日</option><option value="Tue">火曜日</option><option value="Wed">水曜日</option><option value="Thu">木曜日</option><option value="Fri">金曜日</option>
                     </select>
                 </div>
                 <div id="scheduleInputs"></div>
@@ -79,153 +69,77 @@
 
         <div id="tab-test" class="tab-content">
             <div class="card">
-                <h3>新しいテストを追加</h3>
+                <h3>テスト追加</h3>
                 <div class="row">
-                    <input type="text" id="newTestName" class="form-control" placeholder="テスト名 (例: 中間テスト)">
+                    <input type="text" id="newTestName" class="form-control" placeholder="テスト名">
                     <input type="date" id="newTestDate" class="form-control">
                 </div>
-                <button class="btn-primary" onclick="addTest()">＋ テストを追加</button>
+                <button class="btn-primary" onclick="addTest()">追加</button>
                 <hr>
                 <div id="testList"></div>
             </div>
         </div>
 
-        <div style="position:fixed; bottom:20px; right:20px; width:300px;">
-            <button class="btn-primary" style="background:#2B3674; box-shadow:0 10px 30px rgba(0,0,0,0.3);" onclick="saveToGitHub()">
-                <i class="fas fa-save"></i> 変更を全生徒に公開 (GitHub保存)
-            </button>
-        </div>
+        <button class="btn-primary" style="margin-top:20px; background:#2B3674;" onclick="saveToGitHub()"><i class="fas fa-save"></i> GitHubに保存して公開</button>
     </div>
+
     <script src="script.js"></script>
     <script>
-        // 管理画面用ロジック
         let globalData = null;
-
         document.addEventListener('DOMContentLoaded', async () => {
             globalData = await loadGlobalData();
-            renderTimeSettings();
-            renderAdminSchedule();
-            renderTestList();
+            renderTimeSettings(); renderAdminSchedule(); renderTestList();
         });
-
         function checkLogin() {
             if(document.getElementById('adminPass').value === '1234') {
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
-            } else {
-                alert('パスワードが違います');
-            }
+            } else alert('パスワードエラー');
         }
-        function logout() { location.reload(); }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById('tab-'+tabId).classList.add('active');
+        function switchTab(id) {
+            document.querySelectorAll('.tab-content').forEach(e=>e.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(e=>e.classList.remove('active'));
+            document.getElementById('tab-'+id).classList.add('active');
             event.target.classList.add('active');
         }
-
-        // --- レンダリング系 ---
         function renderTimeSettings() {
-            const container = document.getElementById('timeSettingsContainer');
-            container.innerHTML = globalData.timeSettings.map((t, index) => `
-                <div class="row">
-                    <div style="width:40px; font-weight:bold; background:var(--primary); color:white; text-align:center; border-radius:4px;">${t.period}</div>
-                    <input type="time" value="${t.start}" onchange="updateTime(${index}, 'start', this.value)" class="form-control">
-                    <span>〜</span>
-                    <input type="time" value="${t.end}" onchange="updateTime(${index}, 'end', this.value)" class="form-control">
-                </div>
+            document.getElementById('timeSettingsContainer').innerHTML = globalData.timeSettings.map((t,i) => `
+                <div class="row"><span style="width:30px">${t.period}</span><input type="time" value="${t.start}" onchange="globalData.timeSettings[${i}].start=this.value" class="form-control"> 〜 <input type="time" value="${t.end}" onchange="globalData.timeSettings[${i}].end=this.value" class="form-control"></div>
             `).join('');
         }
-
         function renderAdminSchedule() {
-            const cls = document.getElementById('adminClassSelect').value;
-            const day = document.getElementById('adminDaySelect').value;
-            const subjects = globalData.schedules[cls][day] || Array(7).fill("");
-            
-            const container = document.getElementById('scheduleInputs');
-            container.innerHTML = subjects.map((sub, i) => `
-                <div class="row">
-                    <span style="width:30px;">${i+1}限</span>
-                    <input type="text" value="${sub}" class="form-control" onchange="updateSchedule('${cls}', '${day}', ${i}, this.value)">
-                </div>
+            const c = document.getElementById('adminClassSelect').value;
+            const d = document.getElementById('adminDaySelect').value;
+            const s = globalData.schedules[c][d] || Array(7).fill("");
+            document.getElementById('scheduleInputs').innerHTML = s.map((sub,i) => `
+                <div class="row"><span>${i+1}限</span><input type="text" value="${sub}" class="form-control" onchange="if(!globalData.schedules['${c}']['${d}'])globalData.schedules['${c}']['${d}']=Array(7).fill('');globalData.schedules['${c}']['${d}'][${i}]=this.value"></div>
             `).join('');
         }
-
         function renderTestList() {
-            document.getElementById('testList').innerHTML = globalData.tests.map((t, i) => `
-                <div class="row" style="background:#f9f9f9; padding:10px; border-radius:8px;">
-                    <div>${t.name} (${t.date})</div>
-                    <button onclick="deleteTest(${i})" style="background:#ff6b6b; border:none; color:white; border-radius:4px; margin-left:auto;">削除</button>
-                </div>
+            document.getElementById('testList').innerHTML = globalData.tests.map((t,i) => `
+                <div class="row" style="padding:10px; background:#f9f9f9;">${t.name} (${t.date}) <button onclick="globalData.tests.splice(${i},1);renderTestList()" style="margin-left:auto;color:red;border:none;">削除</button></div>
             `).join('');
         }
-
-        // --- データ更新ロジック ---
-        function updateTime(index, key, val) { globalData.timeSettings[index][key] = val; }
-        
-        function updateSchedule(cls, day, index, val) {
-            if(!globalData.schedules[cls][day]) globalData.schedules[cls][day] = Array(7).fill("");
-            globalData.schedules[cls][day][index] = val;
-        }
-
         function addTest() {
-            const name = document.getElementById('newTestName').value;
-            const date = document.getElementById('newTestDate').value;
-            if(name && date) {
-                globalData.tests.push({name, date});
-                renderTestList();
-                document.getElementById('newTestName').value = '';
-            }
+            const n = document.getElementById('newTestName').value;
+            const d = document.getElementById('newTestDate').value;
+            if(n&&d) { globalData.tests.push({name:n, date:d}); renderTestList(); }
         }
-        function deleteTest(index) {
-            globalData.tests.splice(index, 1);
-            renderTestList();
-        }
-
-        // --- GitHub保存 (最重要) ---
         async function saveToGitHub() {
-            const token = document.getElementById('ghToken').value;
-            const user = document.getElementById('ghUser').value;
-            const repo = document.getElementById('ghRepo').value;
-
-            if(!token || !user || !repo) {
-                alert('GitHub設定（トークン、ユーザー名、リポジトリ名）を入力してください');
-                return;
-            }
-
-            // 1. Get current SHA
+            const t = document.getElementById('ghToken').value;
+            const u = document.getElementById('ghUser').value;
+            const r = document.getElementById('ghRepo').value;
+            if(!t||!u||!r) return alert('GitHub設定を入力してください');
             try {
-                const getRes = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/data.json`, {
-                    headers: { 'Authorization': `token ${token}` }
+                const get = await fetch(`https://api.github.com/repos/${u}/${r}/contents/data.json`, {headers:{'Authorization':`token ${t}`}});
+                const sha = (await get.json()).sha;
+                const content = btoa(unescape(encodeURIComponent(JSON.stringify(globalData,null,2))));
+                const res = await fetch(`https://api.github.com/repos/${u}/${r}/contents/data.json`, {
+                    method:'PUT', headers:{'Authorization':`token ${t}`,'Content-Type':'application/json'},
+                    body: JSON.stringify({message:"Update", content, sha})
                 });
-                const getData = await getRes.json();
-                
-                // 2. Update content
-                const content = btoa(unescape(encodeURIComponent(JSON.stringify(globalData, null, 2)))); // Base64 encode for UTF-8
-                
-                const putRes = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/data.json`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: "Update schedule from Admin Panel",
-                        content: content,
-                        sha: getData.sha
-                    })
-                });
-
-                if(putRes.ok) {
-                    alert('保存成功！数分後に生徒画面に反映されます。');
-                } else {
-                    const err = await putRes.json();
-                    alert('保存エラー: ' + err.message);
-                }
-            } catch(e) {
-                alert('通信エラー: ' + e);
-            }
+                if(res.ok) alert('保存完了'); else alert('エラー: '+ (await res.json()).message);
+            } catch(e) { alert('通信エラー'); }
         }
     </script>
 </body>
